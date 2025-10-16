@@ -4,14 +4,19 @@ on:
   push:
     branches:
       - infra
+    paths:
+        - 'Infrastructure/**'
   pull_request:
     branches:
       - main
+    paths:
+        - 'Infrastructure/**'
 env:
   TF_LOG: INFO
   TF_LOG_PATH: terraform.log
   TF_VERSION: 1.13.3
   TF_WORKSPACE: dev
+  TF_WORKING_DIR: ./Infrastructure
   AWS_REGION: us-east-1
   AWS_ACCOUNT_ID: 650251710981
 
@@ -24,6 +29,9 @@ jobs:
   terraform-validate:
     runs-on: ubuntu-latest
     name: 'Validate  & Security Scan'
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
