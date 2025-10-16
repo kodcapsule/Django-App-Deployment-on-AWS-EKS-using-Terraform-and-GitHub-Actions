@@ -2,7 +2,7 @@
 
 terraform {
   backend "s3" {
-    bucket         = "terraform-state-bucket"
+    bucket         = "terraform-state-bucket-kodecapsule-101"
     key            = "production/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
