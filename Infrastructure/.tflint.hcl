@@ -3,14 +3,13 @@
 config {
   format = "compact"      # CLI output format (options: default, compact, json)
   module = true           # Analyze nested modules
-  deep_check = true       # Perform deeper static checks
+  force  = false         # Optional: skip confirmation prompts
 }
 
-# Load AWS ruleset
 plugin "aws" {
-  enabled = true
-  version = "0.31.0"
-  source  = "github.com/terraform-linters/tflint-ruleset-aws"
+    enabled = true
+    version = "0.43.0"
+    source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
 
 # Example: AWS-specific rules
