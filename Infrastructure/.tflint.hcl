@@ -1,9 +1,9 @@
 # .tflint.hcl
 
 config {
-  format = "compact"      # CLI output format (options: default, compact, json)
-  module = true           # Analyze nested modules
-  force  = false         # Optional: skip confirmation prompts
+  format = "compact"      
+  call_module_type = "all"
+  force  = false        
 }
 
 plugin "aws" {
