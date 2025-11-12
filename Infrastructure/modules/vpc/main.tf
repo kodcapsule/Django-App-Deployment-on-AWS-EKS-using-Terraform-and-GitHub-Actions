@@ -134,7 +134,7 @@ resource "aws_route" "private_nat_route" {
   nat_gateway_id         = aws_nat_gateway.nat[each.key].id
 }
 
-# Associate Private Subnets
+#   Associate Private Subnets
 resource "aws_route_table_association" "private_assoc" {
   for_each = aws_subnet.private
 

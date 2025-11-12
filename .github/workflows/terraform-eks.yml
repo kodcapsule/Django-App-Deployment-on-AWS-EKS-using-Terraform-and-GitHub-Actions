@@ -164,7 +164,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -backend=false
+        run: terraform init -backend=true
         
       - name: Terraform Plan
         id: plan
