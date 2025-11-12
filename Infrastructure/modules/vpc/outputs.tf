@@ -18,7 +18,7 @@ output "VPC-NAME" {
   description = "The Name tag of the VPC"
 }
 
-##############################################
+###############################################
 # Public Subnets
 ##############################################
 output "PUBLIC-SUBNET-IDS" {
