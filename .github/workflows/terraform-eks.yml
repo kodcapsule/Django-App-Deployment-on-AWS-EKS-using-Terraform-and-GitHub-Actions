@@ -168,12 +168,7 @@ jobs:
         
       - name: Terraform Plan
         id: plan
-        run: terraform plan \
-         -out=tfplan \
-         -lock=true \
-         -no-color \
-         -input=false \
-         -lock-timeout=300s
+        run: terraform plan  -out=tfplan  -no-color -input=false -lock-timeout=300s
         continue-on-error: false
     
       - name: Upload Terraform Plan Output
@@ -205,7 +200,7 @@ jobs:
         uses: open-policy-agent/setup-opa@v2
         with:
           version: latest
-          
+
       - name: run OPA test
         run: opa test .
       # - name: Validate Terraform with OPA

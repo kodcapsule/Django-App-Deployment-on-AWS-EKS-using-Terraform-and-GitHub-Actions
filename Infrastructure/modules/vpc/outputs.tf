@@ -67,7 +67,7 @@ output "NAT-EIP-ALLOCATIONS" {
 }
 
 ##############################################
-#          Route Tables
+#          Route Tables  
 ##############################################
 output "PUBLIC-ROUTE-TABLE-ID" {
   description = "Route Table ID for the public subnets"
