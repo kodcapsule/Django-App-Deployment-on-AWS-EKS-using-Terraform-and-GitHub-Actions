@@ -116,6 +116,9 @@ jobs:
         uses: actions/upload-artifact@v4 
         with:
           name: tflint-report-${{ github.sha }}  
+          path: ${{ env.TF_WORKING_DIR }}/tflint-report.json  
+          if-no-files-found: warn
+    
   
   # terraform-plan-and-opa-scan:
   #   runs-on: ubuntu-latest
