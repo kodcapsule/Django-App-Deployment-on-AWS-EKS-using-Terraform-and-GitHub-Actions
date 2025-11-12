@@ -1,6 +1,6 @@
 
 ##############################################
-# VPC Outputs
+#           VPC Outputs
 ###############################################
 
 output "VPC-ID" {
@@ -19,7 +19,7 @@ output "VPC-NAME" {
 }
 
 ###############################################
-# Public Subnets
+#          Public Subnets
 ##############################################
 output "PUBLIC-SUBNET-IDS" {
   description = "List of all public subnet IDs"
@@ -33,7 +33,7 @@ output "PUBLIC-SUBNET-CIDRS" {
 
 
 ##############################################
-# Private Subnets
+#          Private Subnets
 ##############################################
 output "PRIVATE-SUBNET-IDS" {
   description = "List of all private subnet IDs"
@@ -46,7 +46,7 @@ output "PRIVATE-SUBNET-CIDRS" {
 }
 
 ##############################################
-# Internet Gateway
+#          Internet Gateway
 ##############################################
 output "INTERNET-GATEWAY-ID" {
   description = "The ID of the Internet Gateway"
@@ -54,7 +54,7 @@ output "INTERNET-GATEWAY-ID" {
 }
 
 ##############################################
-# NAT Gateways
+#          NAT Gateways
 ##############################################
 output "NAT-GATEWAY-IDS" {
   description = "List of all NAT Gateway IDs"
@@ -67,7 +67,7 @@ output "NAT-EIP-ALLOCATIONS" {
 }
 
 ##############################################
-# Route Tables
+#          Route Tables
 ##############################################
 output "PUBLIC-ROUTE-TABLE-ID" {
   description = "Route Table ID for the public subnets"
