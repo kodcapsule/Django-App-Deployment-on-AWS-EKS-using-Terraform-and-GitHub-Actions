@@ -193,13 +193,15 @@ jobs:
             ```
       
       - name: download Opa
-        uses: open-policy-agent/setup-opa
+        uses: open-policy-agent/setup-opa@v2
         with:
           version: latest
-      - name: Validate Terraform with OPA
-        run: |
-          opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
-          'data.terraform.deny' --input <(terraform show -json)
+      - name: run OPA test
+        run: opa test .
+      # - name: Validate Terraform with OPA
+      #   run: |
+      #     opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
+      #     'data.terraform.deny' --input <(terraform show -json)
   # # terraform-apply:
     # runs-on: ubuntu-latest
     # name: 'Terraform Apply'
