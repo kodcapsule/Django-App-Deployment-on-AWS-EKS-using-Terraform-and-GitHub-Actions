@@ -66,7 +66,7 @@ output "NAT-EIP-ALLOCATIONS" {
   value       = [for eip in aws_eip.nat : eip.public_ip]
 }
 
-##############################################
+################################################
 #          Route Tables  
 ##############################################
 output "PUBLIC-ROUTE-TABLE-ID" {
