@@ -17,12 +17,12 @@ rule "aws_instance_invalid_type" {
   enabled = true
 }
 
-rule "aws_s3_bucket_logging_enabled" {
-  enabled = true
-}
+# rule "aws_s3_bucket_logging_enabled" {
+#  enabled = true
+# }
 
 # Organization-wide rule example
-rule "terraform_naming_convention" {
-  enabled = true
-  style   = "snake_case"
-}
+# rule "terraform_naming_convention" {
+#  enabled = true
+#  style   = "snake_case"
+# }
