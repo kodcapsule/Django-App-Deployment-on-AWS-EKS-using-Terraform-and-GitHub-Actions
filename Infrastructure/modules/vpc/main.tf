@@ -1,21 +1,8 @@
 
 
-locals {
-  public_subnets = {
-    "us-east-1a" = "10.0.0.0/24"
-    "us-east-1b" = "10.0.1.0/24"
-    "us-east-1c" = "10.0.2.0/24"
-  }
-
-  private_subnets = {
-    "us-east-1a" = "10.0.10.0/22"
-    "us-east-1b" = "10.0.14.0/22"
-    "us-east-1c" = "10.0.18.0/22"
-  }
-}
 
 ##############################################
-# VPC
+#                 VPC
 ##############################################
 
 resource "aws_vpc" "main-aws_vpc" {
@@ -30,7 +17,7 @@ resource "aws_vpc" "main-aws_vpc" {
 
 
 ##############################################
-# Internet Gateway
+#           Internet Gateway
 ##############################################
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main-aws_vpc.id
@@ -41,7 +28,7 @@ resource "aws_internet_gateway" "igw" {
 
 
 ##############################################
-# Public Subnets (/24)
+#               Public Subnets (/24)
 ##############################################
 
 
@@ -61,7 +48,7 @@ resource "aws_subnet" "public" {
 
 
 ##############################################
-# Private Subnets (/22)
+#          Private Subnets (/22)
 ##############################################
 resource "aws_subnet" "private" {
   for_each = var.PRIVATE-SUBNETS
@@ -76,10 +63,10 @@ resource "aws_subnet" "private" {
 }
 
 ##############################################
-# Elastic IPs for NAT Gateways
+#       Elastic IPs for NAT Gateways
 ##############################################
 resource "aws_eip" "nat" {
-  for_each = local.public_subnets
+  for_each = var.PUBLIC-SUBNETS
 
   domain = "vpc"
   tags = {
@@ -88,10 +75,10 @@ resource "aws_eip" "nat" {
 }
 
 ##############################################
-# NAT Gateways
+#             NAT Gateways
 ##############################################
 resource "aws_nat_gateway" "nat" {
-  for_each = local.public_subnets
+  for_each = var.PUBLIC-SUBNETS
 
   allocation_id = aws_eip.nat[each.key].id
   subnet_id     = aws_subnet.public[each.key].id
@@ -104,7 +91,7 @@ resource "aws_nat_gateway" "nat" {
 }
 
 ##############################################
-# Route Tables
+#             Route Tables
 ##############################################
 # Public Route Table
 resource "aws_route_table" "public" {
@@ -131,7 +118,7 @@ resource "aws_route_table_association" "public_assoc" {
 # Private Route Tables
 ##############################################
 resource "aws_route_table" "private" {
-  for_each = local.private_subnets
+  for_each = var.PRIVATE-SUBNETS
 
   vpc_id = aws_vpc.main.id
   tags = {

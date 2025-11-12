@@ -38,6 +38,9 @@ permissions:
   pull-requests: write
 
 jobs:
+  #####################################
+     # Format/Lint & Validation
+  #####################################
   format-validate-lint:
     runs-on: ubuntu-latest
     name: 'Format/Lint & Validation'
@@ -103,9 +106,9 @@ jobs:
           name: tflint-report-${{ github.sha }}  
           path: ${{ env.TF_WORKING_DIR }}/tflint-report.json  
           if-no-files-found: warn
-
-      
-
+ #####################################
+ #      Static Security Scans
+ #####################################
   Static-Security-Scan:
     runs-on: ubuntu-latest
     name: 'Static Security Scans' 
@@ -132,112 +135,71 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
            soft_fail: 'false'
+ 
+#####################################
+# Terraform Plan and OPA Scan
+#####################################
+  terraform-plan-and-opa-scan:
+    runs-on: ubuntu-latest
+    name: 'Terraform Plan and Policy Enforcement (OPA)'
+    needs: format-validate-lint
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      # - name: Cache TFLint plugins
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.tflint.d/plugins
-      #     key: ${{ runner.os }}-tflint-${{ hashFiles('infrastructure/.tflint.hcl') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-tflint-
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          role-to-assume: arn:aws:iam::650251710981:role/GithubWorkflowRole
+          role-session-name: GitHubActions
+          aws-region: ${{ env.AWS_REGION }}
 
-      # - name: Terraform lint
-      #   id: tflint
-      #   uses: terraform-linters/setup-tflint@v6
-      #   with:
-      #     version: latest
-      #     cache: true
-          
-      # - name: show tflint version
-      #   id: tflint-version
-      #   run: tflint --version
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
 
-      # - name: Initialize TFLint (install plugins)
-      #   id: tflint-init
-      #   working-directory: ${{ env.TF_WORKING_DIR }}
-      #   run: tflint --init
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
-      
-      # - name: Run TFLint
-      #   id: tflint-run
-      #   working-directory: ${{ env.TF_WORKING_DIR }}
-      #   run: tflint --format compact
-      #   continue-on-error: true
-      
-      # - name: Upload TFLint Report
-      #   uses: actions/upload-artifact@v4 
-      #   with:
-      #     name: tflint-report-${{ github.sha }}  
-      #     path: ${{ env.TF_WORKING_DIR }}/tflint-report.json  
-      #     if-no-files-found: warn
-    
-  
-  # terraform-plan-and-opa-scan:
-  #   runs-on: ubuntu-latest
-  #   name: 'Terraform Plan and Policy Enforcement (OPA)'
-  #   needs: format-validate-lint
-  #   defaults:
-  #     run:
-  #       working-directory: ${{ env.TF_WORKING_DIR }}
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
-
-  #     # - name: Configure AWS credentials
-  #     #   uses: aws-actions/configure-aws-credentials@v5.1.0
-  #     #   with:
-  #     #     role-to-assume: arn:aws:iam::650251710981:role/GithubWorkflowRole
-  #     #     role-session-name: GitHubActions
-  #     #     aws-region: ${{ env.AWS_REGION }}
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
         
-  #     - name: Run tfsec Security Scanner
-  #       uses: aquasecurity/tfsec-action@v1.0.3
-        
-  #     - name: Set up Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: ${{ env.TF_VERSION }}
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -out=tfplan -no-color
+        continue-on-error: true
 
-  #     - name: Terraform Init
-  #       id: init
-  #       run: terraform init -backend=false
+      - name: Save Terraform Plan Output
+        id: show
+        run: terraform show -json tfplan > tfplan.json
 
-  #     - name: Terraform Plan
-  #       id: plan
-  #       run: terraform plan -out=tfplan -no-color
-  #       continue-on-error: true
-
-  #     - name: Save Terraform Plan Output
-  #       id: show
-  #       run: terraform show -json tfplan > tfplan.json
-
-  #     - name: Upload Terraform Plan Output
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         name: tfplan-${{ github.sha }}
-  #         path: ${{ env.TF_WORKING_DIR }}/tfplan.json
-  #         retention-days: 5
+      - name: Upload Terraform Plan Output
+        uses: actions/upload-artifact@v2
+        with:
+          name: tfplan-${{ github.sha }}
+          path: ${{ env.TF_WORKING_DIR }}/tfplan.json
+          retention-days: 5
       
-  #     - name: Comment Terraform Plan on PR
-  #       if: github.event_name == 'pull_request'
-  #       uses: marocchino/sticky-pull-request-comment@v2
-  #       with:
-  #         header: terraform plan result
-  #         message: |
-  #           ```terraform
-  #           ${{ steps.show.outputs.stdout }}
-  #           ```
+      - name: Comment Terraform Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: terraform plan result
+          message: |
+            ```terraform
+            ${{ steps.show.outputs.stdout }}
+            ```
       
-
-  #     - name: download Opa
-  #       uses: open-policy-agent/setup-opa
-  #       with:
-  #         version: latest
-  #     - name: Validate Terraform with OPA
-  #       run: |
-  #         opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
-  #         'data.terraform.deny' --input <(terraform show -json)
+      - name: download Opa
+        uses: open-policy-agent/setup-opa
+        with:
+          version: latest
+      - name: Validate Terraform with OPA
+        run: |
+          opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
+          'data.terraform.deny' --input <(terraform show -json)
   # # terraform-apply:
     # runs-on: ubuntu-latest
     # name: 'Terraform Apply'
