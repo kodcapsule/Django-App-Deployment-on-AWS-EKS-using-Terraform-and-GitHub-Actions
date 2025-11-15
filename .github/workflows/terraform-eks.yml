@@ -1,0 +1,227 @@
+name: Terraform EKS
+
+on:
+  push:
+    branches:
+      - infra
+    paths:
+        - 'Infrastructure/**'
+  
+  pull_request:
+    branches:
+      - main
+      - infra
+    paths:
+        - 'Infrastructure/**'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+env:
+  TF_LOG: INFO
+  TF_LOG_PATH: terraform.log
+  TF_VERSION: 1.13.3
+  TF_WORKSPACE: dev
+  TF_WORKING_DIR: ./Infrastructure
+  AWS_REGION: us-east-1
+  
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  #####################################
+     # Format/Lint & Validation
+  #####################################
+  format-validate-lint:
+    runs-on: ubuntu-latest
+    name: 'Format/Lint & Validation'
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2      
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
+
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+     
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+      - name: Cache TFLint plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: ${{ runner.os }}-tflint-${{ hashFiles('infrastructure/.tflint.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-tflint-
+
+      - name: Terraform lint
+        id: tflint
+        uses: terraform-linters/setup-tflint@v6
+        with:
+          version: latest
+          cache: true
+          
+      - name: show tflint version
+        id: tflint-version
+        run: tflint --version
+
+      - name: Initialize TFLint (install plugins)
+        id: tflint-init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      
+      - name: Run TFLint
+        id: tflint-run
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: tflint --format compact
+        continue-on-error: true
+      
+      - name: Upload TFLint Report
+        uses: actions/upload-artifact@v4 
+        with:
+          name: tflint-report-${{ github.sha }}  
+          path: ${{ env.TF_WORKING_DIR }}/tflint-report.json  
+          if-no-files-found: warn
+ #####################################
+ #      Static Security Scans
+ #####################################
+  Static-Security-Scan:
+    runs-on: ubuntu-latest
+    name: 'Static Security Scans' 
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: run checkov scan
+        id: checkov-scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform
+          output_format: 'json'          
+          output_file_path: 'checkov-report.json'
+          quiet: 'false'
+          soft_fail: true
+
+      - name: Run tfsec Security Scanner
+        id: tfsec-scan
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+           soft_fail: 'false'
+ 
+#####################################
+# Terraform Plan and OPA Scan
+#####################################
+  terraform-plan-and-opa-scan:
+    runs-on: ubuntu-latest
+    name: 'Terraform Plan and Policy Enforcement (OPA)'
+    needs: format-validate-lint
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          role-to-assume: arn:aws:iam::650251710981:role/GithubWorkflowRole
+          role-session-name: GitHubActions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=true -input=false
+        
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan  -out=tfplan  -no-color -input=false -lock-timeout=300s
+        continue-on-error: false
+    
+      - name: Upload Terraform Plan Output
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.sha }}
+          path: ${{ env.TF_WORKING_DIR }}/tfplan.json
+          retention-days: 5
+
+      - name: Save Terraform Plan Output
+        id: show
+        run: |
+         terraform show -no-color tfplan > plan.txt
+         echo "stdout<<EOF" >> $GITHUB_OUTPUT
+         cat plan.txt >> $GITHUB_OUTPUT
+         echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment Terraform Plan on PR       
+        if: github.event_name == 'pull_request'        
+        uses: marocchino/sticky-pull-request-comment@v2        
+        with:
+          header: terraform plan result
+          message: |
+            ```terraform
+            ${{ steps.show.outputs.stdout }}
+            ```
+      
+      - name: download Opa
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: run OPA test
+        run: opa test .
+      # - name: Validate Terraform with OPA
+      #   run: |
+      #     opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
+      #     'data.terraform.deny' --input <(terraform show -json)
+  # # terraform-apply:
+    # runs-on: ubuntu-latest
+    # name: 'Terraform Apply'
+    # needs: terraform-plan-and-opa-scan
+    # if: github.ref == 'refs/heads/main' && github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+    # defaults:
+    #   run:
+    #     working-directory: ${{ env.TF_WORKING_DIR }}
+    # steps:
+    #   - name: Checkout code
+    #     uses: actions/checkout@v2
+
+    #   - name: Configure AWS credentials
+    #     uses: aws-actions/configure-aws-credentials@v5.1.0
+    #     with:
+    #       role-to-assume: arn:aws:iam::650251710981:role/GithubWorkflowRole
+    #       role-session-name: GitHubActions
+    #       aws-region: ${{ env.AWS_REGION }}
