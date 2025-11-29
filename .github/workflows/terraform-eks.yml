@@ -38,9 +38,9 @@ permissions:
   pull-requests: write
 
 jobs:
-  #####################################
-     # Format/Lint & Validation
-  #####################################
+#####################################
+  # Stage 1: Format/Lint & Validation
+#####################################
   format-validate-lint:
     runs-on: ubuntu-latest
     name: 'Format/Lint & Validation'
@@ -106,18 +106,60 @@ jobs:
           name: tflint-report-${{ github.sha }}  
           path: ${{ env.TF_WORKING_DIR }}/tflint-report.json  
           if-no-files-found: warn
- #####################################
- #      Static Security Scans
- #####################################
-  Static-Security-Scan:
+  
+#####################################
+  # Stage 2: Static Code Analysis
+#####################################
+  # static-code-analysis:
+  #   runs-on: ubuntu-latest
+  #   name: 'Static Code Analysis'
+  #   defaults:
+  #     run:
+  #       working-directory: ${{ env.TF_WORKING_DIR }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+
+  #     - name: Set up Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: ${{ env.TF_VERSION }}
+
+  #     - name: Terraform Init
+  #       id: init
+  #       run: terraform init -backend=false
+
+  #     - name: Run SonarQube Scan
+  #       uses: sonarsource/sonarcloud-github-action@master
+  #       with:
+  #         args: >
+  #           -Dsonar.projectKey=your_project_key
+  #           -Dsonar.organization=your_organization
+  #           -Dsonar.host.url=https://sonarcloud.io
+  #           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+#####################################
+  # Stage 3: Security Scans
+#####################################
+  Security-Scan:
     runs-on: ubuntu-latest
-    name: 'Static Security Scans' 
+    name: 'Security Scans' 
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Run tfsec Security Scanner
+        id: tfsec-scan
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+           soft_fail: 'false'
+
+      - name: Upload tfsec Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: tfsec.sarif
       
       - name: run checkov scan
         id: checkov-scan
@@ -130,16 +172,10 @@ jobs:
           quiet: 'false'
           soft_fail: true
 
-      - name: Run tfsec Security Scanner
-        id: tfsec-scan
-        uses: aquasecurity/tfsec-action@v1.0.3
-        with:
-           soft_fail: 'false'
- 
 #####################################
-# Terraform Plan and OPA Scan
+  # Stage 4: policy enforcement 
 #####################################
-  terraform-plan-and-opa-scan:
+  policy-and-compliance:
     runs-on: ubuntu-latest
     name: 'Terraform Plan and Policy Enforcement (OPA)'
     needs: format-validate-lint
@@ -207,6 +243,25 @@ jobs:
       #   run: |
       #     opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
       #     'data.terraform.deny' --input <(terraform show -json)
+
+#####################################
+  # Stage 5: Unit Testing  
+#####################################
+
+#####################################
+  # Stage 6: Plan  Terraform Plan
+#####################################
+
+
+#####################################
+  # Stage 7: Review and manual approval
+#####################################
+
+
+#####################################
+  # Stage 8: Deployment - Terraform Apply
+#####################################
+
   # # terraform-apply:
     # runs-on: ubuntu-latest
     # name: 'Terraform Apply'
