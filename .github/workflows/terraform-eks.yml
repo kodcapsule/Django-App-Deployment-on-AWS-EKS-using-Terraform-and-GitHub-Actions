@@ -198,9 +198,9 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      # - name: Terraform Init
-      #   id: init
-      #   run: terraform init -backend=true -input=false
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=true -input=false
         
       - name: Terraform Plan
         id: plan
