@@ -198,9 +198,9 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Terraform Init
-        id: init
-        run: terraform init -backend=true -input=false
+      # - name: Terraform Init
+      #   id: init
+      #   run: terraform init -backend=true -input=false
         
       - name: Terraform Plan
         id: plan
@@ -243,9 +243,9 @@ jobs:
         run: |
           my test command |
              opa val --fail-defined \
-               --data ./Infrastructure/policies/helpers.rego \
-               --data ./Infrastructure/policies/terraform/rego/ \
-               'data.terraform.deny' --input <(terraform show -json tfplan)              
+             --stdin-input \
+              --data ./Infrastructure/policies \
+                             
       #     opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
       #     'data.terraform.deny' --input <(terraform show -json)
 
@@ -267,21 +267,21 @@ jobs:
   # Stage 8: Deployment - Terraform Apply
 #####################################
 
-  # # terraform-apply:
-    # runs-on: ubuntu-latest
-    # name: 'Terraform Apply'
-    # needs: terraform-plan-and-opa-scan
-    # if: github.ref == 'refs/heads/main' && github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
-    # defaults:
-    #   run:
-    #     working-directory: ${{ env.TF_WORKING_DIR }}
-    # steps:
-    #   - name: Checkout code
-    #     uses: actions/checkout@v2
+  # terraform-apply:
+#  runs-on: ubuntu-latest
+#  name: 'Terraform Apply'
+#     # needs: terraform-plan-and-opa-scan
+#     if: github.ref == 'refs/heads/main' && github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+#     defaults:
+#       run:
+#         working-directory: ${{ env.TF_WORKING_DIR }}
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-    #   - name: Configure AWS credentials
-    #     uses: aws-actions/configure-aws-credentials@v5.1.0
-    #     with:
-    #       role-to-assume: arn:aws:iam::650251710981:role/GithubWorkflowRole
-    #       role-session-name: GitHubActions
-    #       aws-region: ${{ env.AWS_REGION }}
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v5.1.0
+#         with:
+#           role-to-assume: arn:aws:iam::650251710981:role/GithubWorkflowRole
+#           role-session-name: GitHubActions
+#           aws-region: ${{ env.AWS_REGION }}
