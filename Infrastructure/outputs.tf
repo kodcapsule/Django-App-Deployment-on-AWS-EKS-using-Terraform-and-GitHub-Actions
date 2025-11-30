@@ -1,17 +1,17 @@
 # Outputs for VPC and Subnets
 ###############################################
 output "VPC-ID" {
-  value = aws_vpc.main-aws_vpc.id
+  value = module.vpc.VPC-ID
   description = "The ID of the VPC"
 }
 
 output "VPC-CIDR" {
-  value = aws_vpc.main-aws_vpc.cidr_block
+  value = module.vpc.VPC-CIDR
   description = "The CIDR block of the VPC"
 }
 
 output "VPC-NAME" {
-  value = aws_vpc.main-aws_vpc.tags["Name"]
+  value = module.vpc.VPC-NAME
   description = "The Name tag of the VPC"
 }
 
