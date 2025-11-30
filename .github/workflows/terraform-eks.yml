@@ -43,7 +43,7 @@ jobs:
 #####################################
   format-validate-lint:
     runs-on: ubuntu-latest
-    name: 'Format/Lint & Validation'
+    name: 'Format, Lint & Validation'
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -142,7 +142,7 @@ jobs:
 #####################################
   Security-Scan:
     runs-on: ubuntu-latest
-    name: 'Security Scans' 
+    name: 'Security Scanning' 
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -177,7 +177,7 @@ jobs:
 #####################################
   policy-and-compliance:
     runs-on: ubuntu-latest
-    name: 'Terraform Plan and Policy Enforcement (OPA)'
+    name: 'Policy and Compliance'
     needs: format-validate-lint
     defaults:
       run:
@@ -238,9 +238,14 @@ jobs:
           version: latest
 
       - name: run OPA test
-        run: opa test .
+        # run: opa test .
       # - name: Validate Terraform with OPA
-      #   run: |
+        run: |
+          my test command |
+             opa val --fail-defined \
+               --data ./Infrastructure/policies/helpers.rego \
+               --data ./Infrastructure/policies/terraform/rego/ \
+               'data.terraform.deny' --input <(terraform show -json tfplan)              
       #     opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
       #     'data.terraform.deny' --input <(terraform show -json)
 
