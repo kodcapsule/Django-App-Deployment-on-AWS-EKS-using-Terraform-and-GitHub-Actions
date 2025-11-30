@@ -238,13 +238,13 @@ jobs:
           version: latest
 
       - name: run OPA test
-        # run: opa test .
+        run: opa test .
       # - name: Validate Terraform with OPA
-        run: |
-          my test command |
-             opa val --fail-defined \
-             --stdin-input \
-              --data ./Infrastructure/policies \
+        # run: |
+        #   my test command |
+        #      opa val --fail-defined \
+        #      --stdin-input \
+        #       --data ./Infrastructure/policies \
                              
       #     opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
       #     'data.terraform.deny' --input <(terraform show -json)
