@@ -9,7 +9,7 @@ resource "aws_vpc" "main-aws_vpc" {
   cidr_block = var.VPC-CIDR-BLOCK
   enable_dns_hostnames = true
   enable_dns_support   = true
-  region = var.REGION
+  # region = var.REGION
     tags = {
         Name = var.VPC-NAME
     }
