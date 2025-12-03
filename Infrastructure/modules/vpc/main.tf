@@ -120,7 +120,7 @@ resource "aws_route_table_association" "public_assoc" {
 resource "aws_route_table" "private" {
   for_each = var.PRIVATE-SUBNETS
 
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.main-aws_vpc.id
   tags = {
     Name = "private-rt-${each.key}"
   }
