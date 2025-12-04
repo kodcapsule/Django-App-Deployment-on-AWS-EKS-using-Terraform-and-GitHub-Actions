@@ -157,6 +157,12 @@ jobs:
         with:
            soft_fail: 'false'
 
+
+      - name: Generate tfsec SARIF report
+        id: generate-sarif
+        run: |
+          tfsec . --format sarif --out tfsec.sarif
+
       - name: Upload tfsec Results
         uses: github/codeql-action/upload-sarif@v4
         with:
