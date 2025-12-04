@@ -157,11 +157,11 @@ jobs:
         with:
            soft_fail: 'false'
            working_directory: .
-           additional_args: > 
-            --concise-output
-            --format sarif
-            --out tfsec.sarif
-            --soft-fail-severities LOW, MEDIUM
+          #  additional_args: > 
+          #   --concise-output
+          #   --format sarif
+          #   --out tfsec.sarif
+          #   --soft-fail-severities LOW, MEDIUM
 
 
       # - name: Generate tfsec SARIF report
