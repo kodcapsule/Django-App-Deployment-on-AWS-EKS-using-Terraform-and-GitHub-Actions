@@ -156,12 +156,18 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
            soft_fail: 'false'
+           working_directory: .
+           additional_args: > 
+            --concise-output
+            --format sarif
+            --out tfsec.sarif
+            --soft-fail-severities LOW, MEDIUM
 
 
-      - name: Generate tfsec SARIF report
-        id: generate-sarif
-        run: |
-          tfsec . --format sarif --out tfsec.sarif
+      # - name: Generate tfsec SARIF report
+      #   id: generate-sarif
+      #   run: |
+      #     tfsec . --format sarif --out tfsec.sarif
 
       - name: Upload tfsec Results
         uses: github/codeql-action/upload-sarif@v4
