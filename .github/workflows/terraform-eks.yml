@@ -157,6 +157,7 @@ jobs:
         with:
            tfsec_args: --soft-fail
           #  working_directory: .
+           github_token: ${{ github.token }}
           
       - name: Generate tfsec SARIF report
         id: generate-sarif
