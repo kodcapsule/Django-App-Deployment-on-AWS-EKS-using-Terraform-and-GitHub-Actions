@@ -69,14 +69,8 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
-      - name: Cache TFLint plugins
-        uses: actions/cache@v4
-        with:
-          path: ~/.tflint.d/plugins
-          key: ${{ runner.os }}-tflint-${{ hashFiles('infrastructure/.tflint.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-tflint-
-
+        
+     
       - name: Terraform lint
         id: tflint
         uses: terraform-linters/setup-tflint@v6
@@ -108,6 +102,13 @@ jobs:
           path: ${{ env.TF_WORKING_DIR }}/tflint-report.json  
           if-no-files-found: warn
   
+      - name: Cache TFLint plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: ${{ runner.os }}-tflint-${{ hashFiles('infrastructure/.tflint.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-tflint-
 #####################################
   # Stage 2: Static Code Analysis
 #####################################
@@ -154,15 +155,17 @@ jobs:
       - name: Run tfsec Security Scanner
         id: tfsec-scan
         uses:  aquasecurity/tfsec-pr-commenter-action@v1.2.0
+        # run: |
+        #   tfsec . --format sarif --out tfsec.sarif
         with:
            tfsec_args: --soft-fail
           #  working_directory: .
-           github_token: ${{ github.token }}
           
+
       - name: Generate tfsec SARIF report
         id: generate-sarif
         run: |
-          tfsec . --format sarif --out tfsec.sarif
+          tfsec ./infrastructure --format sarif --out tfsec.sarif
 
       - name: Upload tfsec Results
         uses: github/codeql-action/upload-sarif@v4
