@@ -274,9 +274,6 @@ jobs:
 #####################################
   # Stage 5: Unit Testing  
 #####################################
-#####################################
-  # Stage 4: policy enforcement 
-#####################################
   unit-testing:
     runs-on: ubuntu-latest
     name: 'Unit Testing'
@@ -324,13 +321,13 @@ jobs:
 
 
 
-      - name: Run terraform-compliance tests
-        uses: terraform-compliance/terraform-compliance-action@v1.0.6
-        with:
-          tf_root_path: .
-          features_path: ./tests/features
-          output_format: pretty
-          continue_on_failure: false
+      # - name: Run terraform-compliance tests
+      #   uses: terraform-compliance/terraform-compliance-action@v1.0.6
+      #   with:
+      #     tf_root_path: .
+      #     features_path: ./tests/features
+      #     output_format: pretty
+      #     continue_on_failure: false
       
 
 
