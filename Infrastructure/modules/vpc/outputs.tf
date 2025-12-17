@@ -14,7 +14,7 @@ output "VPC-CIDR" {
 }
 
 output "VPC-NAME" {
-  value = aws_vpc.main-aws_vpc.name
+  value = aws_vpc.main-aws_vpc.tags["Name"] 
   description = "The Name tag of the VPC"
 }
 

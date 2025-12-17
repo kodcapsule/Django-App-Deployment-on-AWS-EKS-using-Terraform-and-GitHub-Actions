@@ -9,7 +9,7 @@ resource "aws_vpc" "main-aws_vpc" {
   cidr_block = var.VPC-CIDR-BLOCK
   enable_dns_hostnames = true
   enable_dns_support   = true
-  region = var.REGION
+  # region = var.REGION
     tags = {
         Name = var.VPC-NAME
     }
@@ -53,7 +53,7 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   for_each = var.PRIVATE-SUBNETS
 
-  vpc_id            = aws_vpc.main.id
+  vpc_id            = aws_vpc.main-aws_vpc.id
   cidr_block        = each.value
   availability_zone = each.key
 
@@ -95,7 +95,7 @@ resource "aws_nat_gateway" "nat" {
 ##############################################
 # Public Route Table
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.main-aws_vpc.id
   tags = {
     Name = "public-rt"
   }
@@ -120,7 +120,7 @@ resource "aws_route_table_association" "public_assoc" {
 resource "aws_route_table" "private" {
   for_each = var.PRIVATE-SUBNETS
 
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.main-aws_vpc.id
   tags = {
     Name = "private-rt-${each.key}"
   }
@@ -137,7 +137,6 @@ resource "aws_route" "private_nat_route" {
 #   Associate Private Subnets  
 resource "aws_route_table_association" "private_assoc" {
   for_each = aws_subnet.private
-
   subnet_id      = each.value.id
   route_table_id = aws_route_table.private[each.key].id
 }

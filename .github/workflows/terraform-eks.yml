@@ -36,14 +36,15 @@ permissions:
   id-token: write
   contents: read
   pull-requests: write
+  security-events: write
 
 jobs:
-  #####################################
-     # Format/Lint & Validation
-  #####################################
+#####################################
+  # Stage 1: Format/Lint & Validation
+#####################################
   format-validate-lint:
     runs-on: ubuntu-latest
-    name: 'Format/Lint & Validation'
+    name: 'Format, Lint & Validation'
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -68,14 +69,8 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
-      - name: Cache TFLint plugins
-        uses: actions/cache@v4
-        with:
-          path: ~/.tflint.d/plugins
-          key: ${{ runner.os }}-tflint-${{ hashFiles('infrastructure/.tflint.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-tflint-
-
+        
+     
       - name: Terraform lint
         id: tflint
         uses: terraform-linters/setup-tflint@v6
@@ -106,19 +101,88 @@ jobs:
           name: tflint-report-${{ github.sha }}  
           path: ${{ env.TF_WORKING_DIR }}/tflint-report.json  
           if-no-files-found: warn
- #####################################
- #      Static Security Scans
- #####################################
-  Static-Security-Scan:
+  
+      - name: Cache TFLint plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: ${{ runner.os }}-tflint-${{ hashFiles('infrastructure/.tflint.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-tflint-
+#####################################
+  # Stage 2: Static Code Analysis
+#####################################
+  # static-code-analysis:
+  #   runs-on: ubuntu-latest
+  #   name: 'Static Code Analysis'
+  #   defaults:
+  #     run:
+  #       working-directory: ${{ env.TF_WORKING_DIR }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+
+  #     - name: Set up Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: ${{ env.TF_VERSION }}
+
+  #     - name: Terraform Init
+  #       id: init
+  #       run: terraform init -backend=false
+
+  #     - name: Run SonarQube Scan
+  #       uses: sonarsource/sonarcloud-github-action@master
+  #       with:
+  #         args: >
+  #           -Dsonar.projectKey=your_project_key
+  #           -Dsonar.organization=your_organization
+  #           -Dsonar.host.url=https://sonarcloud.io
+  #           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+#####################################
+  # Stage 3: Security Scans
+#####################################
+  Security-Scan:
     runs-on: ubuntu-latest
-    name: 'Static Security Scans' 
+    name: 'Security Scanning' 
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Run tfsec Security Scanner
+        id: tfsec-scan
+        uses:  aquasecurity/tfsec-action@v1.0.0
+        # run: |
+        #   tfsec . --format sarif --out tfsec.sarif
+        with:
+           sarif_file: tfsec.sarif
+           soft_fail: true
+           github_token: ${{ secrets.GITHUB_TOKEN }}
+          #  format: sarif
+          #  working_directory: ./infrastructure
+          
+         
+      # - name: Generate tfsec SARIF report
+      #   id: generate-sarif
+      #   run: |
+      #     tfsec ./infrastructure --format sarif --out tfsec.sarif
+
+      # - name: Upload tfsec Results
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   if: always()
+      #   with:
+      #     sarif_file: tfsec.sarif 
+      #     category: tfsec-security
       
+
+      - name: tfsec PR Commenter
+        uses: tfsec/tfsec-pr-commenter-action@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: run checkov scan
         id: checkov-scan
         uses: bridgecrewio/checkov-action@v12
@@ -130,18 +194,12 @@ jobs:
           quiet: 'false'
           soft_fail: true
 
-      - name: Run tfsec Security Scanner
-        id: tfsec-scan
-        uses: aquasecurity/tfsec-action@v1.0.3
-        with:
-           soft_fail: 'false'
- 
 #####################################
-# Terraform Plan and OPA Scan
+  # Stage 4: policy enforcement 
 #####################################
-  terraform-plan-and-opa-scan:
+  policy-and-compliance:
     runs-on: ubuntu-latest
-    name: 'Terraform Plan and Policy Enforcement (OPA)'
+    name: 'Policy and Compliance'
     needs: format-validate-lint
     defaults:
       run:
@@ -204,24 +262,48 @@ jobs:
       - name: run OPA test
         run: opa test .
       # - name: Validate Terraform with OPA
-      #   run: |
+        # run: |
+        #   my test command |
+        #      opa val --fail-defined \
+        #      --stdin-input \
+        #       --data ./Infrastructure/policies \
+                             
       #     opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
       #     'data.terraform.deny' --input <(terraform show -json)
-  # # terraform-apply:
-    # runs-on: ubuntu-latest
-    # name: 'Terraform Apply'
-    # needs: terraform-plan-and-opa-scan
-    # if: github.ref == 'refs/heads/main' && github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
-    # defaults:
-    #   run:
-    #     working-directory: ${{ env.TF_WORKING_DIR }}
-    # steps:
-    #   - name: Checkout code
-    #     uses: actions/checkout@v2
 
-    #   - name: Configure AWS credentials
-    #     uses: aws-actions/configure-aws-credentials@v5.1.0
-    #     with:
-    #       role-to-assume: arn:aws:iam::650251710981:role/GithubWorkflowRole
-    #       role-session-name: GitHubActions
-    #       aws-region: ${{ env.AWS_REGION }}
+#####################################
+  # Stage 5: Unit Testing  
+#####################################
+
+#####################################
+  # Stage 6: Plan  Terraform Plan
+#####################################
+
+
+#####################################
+  # Stage 7: Review and manual approval
+#####################################
+
+
+#####################################
+  # Stage 8: Deployment - Terraform Apply
+#####################################
+
+  # terraform-apply:
+#  runs-on: ubuntu-latest
+#  name: 'Terraform Apply'
+#     # needs: terraform-plan-and-opa-scan
+#     if: github.ref == 'refs/heads/main' && github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+#     defaults:
+#       run:
+#         working-directory: ${{ env.TF_WORKING_DIR }}
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
+
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v5.1.0
+#         with:
+#           role-to-assume: arn:aws:iam::650251710981:role/GithubWorkflowRole
+#           role-session-name: GitHubActions
+#           aws-region: ${{ env.AWS_REGION }}
