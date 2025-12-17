@@ -158,10 +158,10 @@ jobs:
         # run: |
         #   tfsec . --format sarif --out tfsec.sarif
         with:
-          #  sarif_file: tfsec.sarif
+           sarif_file: tfsec.sarif
            soft_fail: true
            github_token: ${{ secrets.GITHUB_TOKEN }}
-           format: sarif
+          #  format: sarif
           #  working_directory: ./infrastructure
           
          
