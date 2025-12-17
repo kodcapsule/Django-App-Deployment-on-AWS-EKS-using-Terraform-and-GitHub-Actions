@@ -274,6 +274,65 @@ jobs:
 #####################################
   # Stage 5: Unit Testing  
 #####################################
+#####################################
+  # Stage 4: policy enforcement 
+#####################################
+  unit-testing:
+    runs-on: ubuntu-latest
+    name: 'Unit Testing'
+    needs: format-validate-lint    
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:  
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
+
+      - name: Setup Go (for Terratest)
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.20'
+
+
+
+      - name: Install Terratest Dependencies
+        working-directory: ./tests
+        run: |
+          go mod init terraform-tests || true
+          go get github.com/gruntwork-io/terratest/modules/terraform
+          go get github.com/stretchr/testify/assert
+          go mod tidy
+
+      - name: Run Terratest Unit Tests
+        working-directory: ./tests
+        run: go test -v -timeout 30m
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          TF_VAR_environment: test
+       
+
+      # - name: Run Terraform Native Tests
+
+
+
+      - name: Run terraform-compliance tests
+        uses: terraform-compliance/terraform-compliance-action@v1.0.6
+        with:
+          tf_root_path: .
+          features_path: ./tests/features
+          output_format: pretty
+          continue_on_failure: false
+      
+
 
 #####################################
   # Stage 6: Plan  Terraform Plan
