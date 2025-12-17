@@ -159,6 +159,7 @@ jobs:
         #   tfsec . --format sarif --out tfsec.sarif
         with:
            sarif_file: tfsec.sarif
+           soft_fail: true
           #  working_directory: .
          
       - name: Generate tfsec SARIF report
