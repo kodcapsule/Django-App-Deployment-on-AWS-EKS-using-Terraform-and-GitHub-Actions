@@ -160,12 +160,13 @@ jobs:
         with:
            sarif_file: tfsec.sarif
            soft_fail: true
+           github_token: ${{ secrets.GITHUB_TOKEN }}
           #  working_directory: .
          
-      - name: Generate tfsec SARIF report
-        id: generate-sarif
-        run: |
-          tfsec ./infrastructure --format sarif --out tfsec.sarif
+      # - name: Generate tfsec SARIF report
+      #   id: generate-sarif
+      #   run: |
+      #     tfsec ./infrastructure --format sarif --out tfsec.sarif
 
       - name: Upload tfsec Results
         uses: github/codeql-action/upload-sarif@v1
