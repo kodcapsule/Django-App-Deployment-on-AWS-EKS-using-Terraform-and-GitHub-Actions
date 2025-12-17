@@ -154,11 +154,11 @@ jobs:
 
       - name: Run tfsec Security Scanner
         id: tfsec-scan
-        uses:  aquasecurity/tfsec-pr-commenter-action@v1.2.0
+        uses:  tfsec/tfsec-sarif-action@main
         # run: |
         #   tfsec . --format sarif --out tfsec.sarif
         with:
-           tfsec_args: --soft-fail
+           sarif_file: tfsec.sarif
           #  working_directory: .
           
 
@@ -168,7 +168,7 @@ jobs:
           tfsec ./infrastructure --format sarif --out tfsec.sarif
 
       - name: Upload tfsec Results
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v1
         with:
           sarif_file: tfsec.sarif
       
