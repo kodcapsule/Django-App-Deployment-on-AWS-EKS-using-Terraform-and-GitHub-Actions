@@ -301,20 +301,20 @@ jobs:
 
 
 
-      # - name: Install Terratest Dependencies
-      #   working-directory: ./infrastructure
-      #   run: |
-      #     go mod init terraform-tests || true
-      #     go get github.com/gruntwork-io/terratest/modules/terraform
-      #     go get github.com/stretchr/testify/assert
-      #     go mod tidy
+      - name: Install Terratest Dependencies
+        # working-directory: ./infrastructure
+        run: |
+          go mod init terraform-tests || true
+          go get github.com/gruntwork-io/terratest/modules/terraform
+          go get github.com/stretchr/testify/assert
+          go mod tidy
 
-      # - name: Run Terratest Unit Tests
-      #   working-directory: ./infrastructure
-      #   run: go test -v -timeout 30m
-      #   env:
-      #     AWS_REGION: ${{ env.AWS_REGION }}
-      #     TF_VAR_environment: test
+      - name: Run Terratest Unit Tests
+        # working-directory: ./infrastructure
+        run: go test -v -timeout 30m
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          TF_VAR_environment: test
        
 
       - name: Run Terraform Native Tests
@@ -336,16 +336,19 @@ jobs:
       #     continue_on_failure: false
       
 
+#####################################
+  # Stage 5: Plan and review 
+#####################################
+ 
+      
 
-#####################################
-  # Stage 6: Plan  Terraform Plan
-#####################################
 
 
 #####################################
   # Stage 7: Review and manual approval
 #####################################
 
+  
 
 #####################################
   # Stage 8: Deployment - Terraform Apply
