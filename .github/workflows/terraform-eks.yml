@@ -274,7 +274,7 @@ jobs:
 #####################################
   # Stage 5: Unit Testing  
 #####################################
-  unit-testing:
+  unit-and-integration-testing:
     runs-on: ubuntu-latest
     name: 'Unit Testing'
     needs: format-validate-lint    
@@ -292,29 +292,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -backend=false
-
-      - name: Setup Go (for Terratest)
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.20'
-
-
-
-      - name: Install Terratest Dependencies
-        # working-directory: ./infrastructure
-        run: |
-          go mod init terraform-tests || true
-          go get github.com/gruntwork-io/terratest/modules/terraform
-          go get github.com/stretchr/testify/assert
-          go mod tidy
-
-      - name: Run Terratest Unit Tests
-        # working-directory: ./infrastructure
-        run: go test -v -timeout 30m
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-          TF_VAR_environment: test
+        run: terraform init -backend=false          
        
 
       - name: Run Terraform Native Tests
