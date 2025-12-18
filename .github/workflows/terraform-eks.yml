@@ -302,7 +302,7 @@ jobs:
 
 
       - name: Install Terratest Dependencies
-        working-directory: ./tests
+        working-directory: ./infrastructure
         run: |
           go mod init terraform-tests || true
           go get github.com/gruntwork-io/terratest/modules/terraform
@@ -310,7 +310,7 @@ jobs:
           go mod tidy
 
       - name: Run Terratest Unit Tests
-        working-directory: ./tests
+        working-directory: ./infrastructure
         run: go test -v -timeout 30m
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
