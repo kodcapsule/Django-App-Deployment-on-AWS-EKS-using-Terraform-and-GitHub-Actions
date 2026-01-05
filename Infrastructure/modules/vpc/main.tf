@@ -1,12 +1,9 @@
-
-
-
 ##############################################
 #                 VPC
 ##############################################
 
 resource "aws_vpc" "main-aws_vpc" {
-  cidr_block = var.VPC-CIDR-BLOCK
+  cidr_block = var.vpc_cidr_block
   enable_dns_hostnames = true
   enable_dns_support   = true
   # region = var.REGION
@@ -14,6 +11,8 @@ resource "aws_vpc" "main-aws_vpc" {
         Name = var.VPC-NAME
     }
 }
+
+
 
 
 ##############################################
