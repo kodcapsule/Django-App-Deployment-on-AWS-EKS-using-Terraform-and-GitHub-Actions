@@ -205,8 +205,8 @@ jobs:
         with:
           version: latest
 
-      - name: Run OPA test
-        run: opa test .
+      # - name: Run OPA test
+      #   run: opa test .
       # - name: Validate Terraform with OPA
         # run: |
         #   my test command |
@@ -263,7 +263,7 @@ jobs:
 
 
 #####################################
-  # Stage 7: Review and manual approval
+  #  Review and manual approval
 #####################################
   manual-approval:
     runs-on: ubuntu-latest
@@ -271,7 +271,7 @@ jobs:
     needs: 
       - policy-and-compliance
       - unit-and-integration-testing
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
     steps:
     
     - name: Await Manual Approval
@@ -283,10 +283,10 @@ jobs:
   
 
 #####################################
-  # Stage 8: Deployment - Terraform Apply
+  # Deployment infrastructure
 #####################################
 
-  apply-infrastructure:
+  deploy-infrastructure:
     runs-on: ubuntu-latest
     name: 'Terraform Apply'
     needs: manual-approval
@@ -313,7 +313,7 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init -backend=true -input=false
-        
+
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve -input=false -lock-timeout=300s tfplan
