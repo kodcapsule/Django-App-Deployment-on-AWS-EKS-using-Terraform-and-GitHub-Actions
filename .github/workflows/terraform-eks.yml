@@ -272,15 +272,21 @@ jobs:
     needs: 
       - policy-and-compliance
       - unit-and-integration-testing
-    # if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
+    if: success()
     steps:
     
     - name: Await Manual Approval
-      uses: peter-evans/wait-for-approval@v2
+      uses: trstringer/manual-approval@v1
       with:
-        approval-message: 'Approve to proceed with Terraform Apply'
-        timeout-minutes: 1440  # 24 hours
-
+        secret: ${{ github.TOKEN }}
+        approvers: kodcapsule
+        minimum-approvals: 1
+        issue-title: "Deploying v1.3.5 to prod from staging"
+        issue-body: "Please approve or deny the deployment of version v1.3.5."
+        exclude-workflow-initiator-as-approver: false
+        
+      
+        
   
 
 #####################################
