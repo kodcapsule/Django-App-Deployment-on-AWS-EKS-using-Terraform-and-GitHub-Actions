@@ -28,6 +28,7 @@ permissions:
   security-events: write
 
 jobs:
+
 #####################################
   #  Format/Lint & Validation
 #####################################
@@ -145,6 +146,8 @@ jobs:
       #       -Dsonar.organization=your_organization
       #       -Dsonar.host.url=https://sonarcloud.io
       #       -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+
 #####################################
   # policy enforcement 
 #####################################
@@ -272,26 +275,34 @@ jobs:
     needs: 
       - policy-and-compliance
       - unit-and-integration-testing
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
+    if: success()
+
+    permissions:
+      issues: write
     steps:
     
     - name: Await Manual Approval
-      uses: peter-evans/wait-for-approval@v2
+      uses: trstringer/manual-approval@v1
       with:
-        approval-message: 'Approve to proceed with Terraform Apply'
-        timeout-minutes: 1440  # 24 hours
-
+        secret: ${{ github.TOKEN }}
+        approvers: kodcapsule
+        minimum-approvals: 1
+        issue-title: "Deploying v1.3.5 to prod from staging"
+        issue-body: "Please approve or deny the deployment of version v1.3.5."
+        exclude-workflow-initiator-as-approver: false
+        
+      
+        
   
 
-#####################################
-  # Deployment infrastructure
-#####################################
+# #####################################
+#   # Deployment infrastructure
+# #####################################
 
   deploy-infrastructure:
     runs-on: ubuntu-latest
     name: 'Terraform Apply'
-    needs: manual-approval
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: manual-approval    
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -315,7 +326,13 @@ jobs:
         id: init
         run: terraform init -backend=true -input=false
 
+      - name: Generate Terraform Plan
+        id: plan
+        run: terraform plan -out=tfplan -no-color -input=false -lock-timeout=300s
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve -input=false -lock-timeout=300s tfplan
+        working-directory: ${{ env.TF_WORKING_DIR }}
       
