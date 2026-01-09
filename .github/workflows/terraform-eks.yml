@@ -207,8 +207,12 @@ jobs:
         uses: open-policy-agent/setup-opa@v2
         with:
           version: latest
+      
+      - name: validate rego syntax
+        run: opa check ./Infrastructure/policies
 
-      # - name: Run OPA test
+      - name: Run OPA tests
+        run: opa test ./Infrastructure/policies/ --verbose
       #   run: opa test .
       
       # - name: Validate Terraform with OPA
