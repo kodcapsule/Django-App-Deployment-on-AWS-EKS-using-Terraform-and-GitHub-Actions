@@ -6,6 +6,11 @@ on:
     workflows: ["Terraform CI/CD Pipeline -EKS"]
     types:
       - completed 
+    branches:
+      - infra
+  
+
+
 env:
   TF_LOG: INFO
   TF_LOG_PATH: terraform.log
