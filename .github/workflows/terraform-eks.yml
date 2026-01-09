@@ -138,14 +138,6 @@ jobs:
           quiet: 'false'
           soft_fail: true
 
-      # - name: Run SonarQube Scan
-      #   uses: sonarsource/sonarcloud-github-action@master
-      #   with:
-      #     args: >
-      #       -Dsonar.projectKey=your_project_key
-      #       -Dsonar.organization=your_organization
-      #       -Dsonar.host.url=https://sonarcloud.io
-      #       -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
 
 #####################################
@@ -213,17 +205,19 @@ jobs:
 
       - name: Run OPA tests
         run: opa test policies/ --verbose
-      #   run: opa test .
-      
-      # - name: Validate Terraform with OPA
-        # run: |
-        #   my test command |
-        #      opa val --fail-defined \
-        #      --stdin-input \
-        #       --data ./Infrastructure/policies \
-                             
-      #     opa eval --format pretty --data https://raw.githubusercontent.com/open-policy-agent/contrib/main/terraform/rego/terraform.rego \
-      #     'data.terraform.deny' --input <(terraform show -json)
+
+      - name: Generate Policy Documentation
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p docs
+          for f in policies/**/*.rego; do
+            echo "# $(basename ${f%.*})" >> docs/policies.md
+            echo '```rego' >> docs/policies.md
+            cat $f >> docs/policies.md
+            echo '```' >> docs/policies.md
+            echo "" >> docs/policies.md
+          done
+     
 
 #####################################
   # Unit Testing  
