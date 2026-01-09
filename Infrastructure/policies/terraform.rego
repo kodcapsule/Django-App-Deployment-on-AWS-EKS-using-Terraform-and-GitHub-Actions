@@ -15,7 +15,7 @@ deny contains msg if {
     some resource in input.resource_changes
     resource.type == "aws_s3_bucket"
     not resource.change.after.versioning[_].enabled
-    msg := sprintf("S3 bucket '%s' must have versioning enabled", [resource.address])
+    msg := sprintf("S3 bucket '%s' must have versioning enabled!!", [resource.address])
 }
 
 deny contains msg if {
