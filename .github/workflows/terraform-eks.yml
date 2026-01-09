@@ -323,7 +323,13 @@ jobs:
         id: init
         run: terraform init -backend=true -input=false
 
+      - name: Generate Terraform Plan
+        id: plan
+        run: terraform plan -out=tfplan -no-color -input=false -lock-timeout=300s
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve -input=false -lock-timeout=300s tfplan
+        working-directory: ${{ env.TF_WORKING_DIR }}
       
