@@ -273,13 +273,16 @@ jobs:
       - policy-and-compliance
       - unit-and-integration-testing
     if: success()
+
+    permissions:
+      issues: write
     steps:
     
     - name: Await Manual Approval
       uses: trstringer/manual-approval@v1
       with:
         secret: ${{ github.TOKEN }}
-        # approvers: kodcapsule
+        approvers: kodcapsule
         minimum-approvals: 1
         issue-title: "Deploying v1.3.5 to prod from staging"
         issue-body: "Please approve or deny the deployment of version v1.3.5."
