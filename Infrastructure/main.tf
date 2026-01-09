@@ -1,6 +1,7 @@
 resource "aws_instance" "web_server" {
   ami                    = "ami-0ecb62995f68bb549"
   instance_type          = "t3.micro"
+  security_groups        = [aws_security_group.allow-http.name]
   
 
   # User data script to install and start a web server
@@ -24,5 +25,17 @@ resource "aws_instance" "web_server" {
   tags = {    
     Environment = "Development"
     ManagedBy   = "Terraform"
+  }
+}
+
+
+resource "aws_security_group" "allow-http" {
+  name        = "allow-http"
+  description = "Allow HTTP inbound traffic"
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }

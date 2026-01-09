@@ -206,17 +206,17 @@ jobs:
       - name: Run OPA tests
         run: opa test policies/ --verbose
 
-      - name: Generate Policy Documentation
-        if: github.ref == 'refs/heads/main'
-        run: |
-          mkdir -p docs
-          for f in policies/**/*.rego; do
-            echo "# $(basename ${f%.*})" >> docs/policies.md
-            echo '```rego' >> docs/policies.md
-            cat $f >> docs/policies.md
-            echo '```' >> docs/policies.md
-            echo "" >> docs/policies.md
-          done
+      # - name: Generate Policy Documentation
+      #   if: github.ref == 'refs/heads/main'
+      #   run: |
+      #     mkdir -p docs
+      #     for f in policies/**/*.rego; do
+      #       echo "# $(basename ${f%.*})" >> docs/policies.md
+      #       echo '```rego' >> docs/policies.md
+      #       cat $f >> docs/policies.md
+      #       echo '```' >> docs/policies.md
+      #       echo "" >> docs/policies.md
+      #     done
      
 
 #####################################
@@ -249,21 +249,8 @@ jobs:
           terraform init -backend=false
           terraform test
         continue-on-error: true
-
-
-
-
-      # - name: Run terraform-compliance tests
-      #   uses: terraform-compliance/terraform-compliance-action@v1.0.6
-      #   with:
-      #     tf_root_path: .
-      #     features_path: ./tests/features
-      #     output_format: pretty
-      #     continue_on_failure: false
-      
-   
-
-
+    
+  
 #####################################
   #  Review and manual approval
 #####################################
